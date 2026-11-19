@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>सोशल हब</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f4f6fb; color: #222; padding: 16px; }
+  h1 { text-align: center; margin: 12px 0; color: #4a3aff; }
+  .search { display: flex; gap: 8px; margin-bottom: 16px; }
+  .search input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 10px; font-size: 16px; }
+  .search button { padding: 12px 18px; border: none; border-radius: 10px; background: #4a3aff; color: #fff; font-size: 16px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  .grid a { background: #fff; border-radius: 12px; padding: 16px 6px; text-align: center; text-decoration: none; color: #222; box-shadow: 0 2px 6px rgba(0,0,0,0.08); font-size: 14px; }
+  .grid a span { display: block; font-size: 28px; margin-bottom: 6px; }
+  .chat { background: #fff; border-radius: 12px; padding: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+  #messages { height: 260px; overflow-y: auto; margin-bottom: 10px; }
+  .msg { margin: 6px 0; padding: 8px 12px; border-radius: 10px; max-width: 85%; }
+  .user { background: #4a3aff; color: #fff; margin-left: auto; }
+  .bot { background: #eceefb; }
+  .chatbox { display: flex; gap: 8px; }
+  .chatbox input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 10px; font-size: 16px; }
+  .chatbox button { padding: 10px 16px; border: none; border-radius: 10px; background: #00a86b; color: #fff; }
+</style>
+</head>
+<body>
+<h1>सोशल हब</h1>
+
+<div class="search">
+  <input id="q" placeholder="यहाँ गूगल पर खोजें...">
+  <button onclick="doSearch()">खोजें</button>
+</div>
+
+<div class="grid">
+  <a href="https://www.youtube.com" target="_blank"><span>▶️</span>यूट्यूब</a>
+  <a href="https://www.instagram.com" target="_blank"><span>📷</span>इंस्टाग्राम</a>
+  <a href="https://www.facebook.com" target="_blank"><span>👍</span>फ़ेसबुक</a>
+  <a href="https://x.com" target="_blank"><span>🐦</span>एक्स</a>
+  <a href="https://www.linkedin.com" target="_blank"><span>💼</span>लिंक्डइन</a>
+  <a href="https://web.whatsapp.com" target="_blank"><span>💬</span>व्हाट्सऐप</a>
+</div>
+
+<div class="chat">
+  <div id="messages"></div>
+  <div class="chatbox">
+    <input id="chatInput" placeholder="एआई से कुछ भी पूछें...">
+    <button onclick="sendChat()">भेजें</button>
+  </div>
+</div>
+
+<script>
+  const GEMINI_KEY = "AQ.Ab8RN6Kl9uKaOiNbyYdZFIUhp2EakqOveVIGFgELGT0fbXEdaw";
+
+  function doSearch() {
+    const q = document.getElementById('q').value.trim();
+    if (q) window.open('https://www.google.com/search?q=' + encodeURIComponent(q), '_blank');
+  }
+
+  function addMsg(text, who) {
+    const d = document.createElement('div');
+    d.className = 'msg ' + who;
+    d.textContent = text;
+    const box = document.getElementById('messages');
+    box.appendChild(d);
+    box.scrollTop = box.scrollHeight;
+    return d;
+  }
+
+  async function sendChat() {
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    addMsg(text, 'user');
+    const loading = addMsg('सोच रहा हूँ...', 'bot');
+    try {
+      const res = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + GEMINI_KEY,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: text }] }] })
+        }
+      );
+      const data = await res.json();
+      loading.textContent = data.candidates[0].content.parts[0].text;
+    } catch (e) {
+      loading.textContent = 'कुछ गड़बड़ हो गई। अपनी API चाबी और इंटरनेट जाँचें।';
+    }
+  }
+
+  document.getElementById('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
+  document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+</script>
+</body>
+</html>
